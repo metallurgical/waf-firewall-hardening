@@ -86,13 +86,17 @@ events {
 
 http {
 	client_max_body_size 100M;
-  include /etc/nginx/naxsi_core.rules; # <----------- load naxsi core rules
+  	include /etc/nginx/naxsi_core.rules; # <----------- load naxsi core rules
   
 	##
 	# Basic Settings
 	##
-  .......
-  .......
+  	.......
+  	.......
 }
 ```
+
+Naxsi works on a per-location basis, meaning you can only enable it inside a location under each vhost.
+
+
 
