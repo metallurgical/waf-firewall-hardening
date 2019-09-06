@@ -96,7 +96,82 @@ http {
 }
 ```
 
-Naxsi works on a per-location basis, meaning you can only enable it inside a location under each vhost.
+Naxsi works on a per-location basis, meaning you can only enable it inside a location under each vhost. Create another file to store basic rules to enable `naxsi` either in learning mode or production mode as well as whitelist rules. Create file `/etc/nginx/naxsi.rules` and put following content:
 
+```
+SecRulesEnabled; #enable naxsi
+LearningMode; #<----- learning mode, turn off to start blocking unintended request
+LibInjectionSql; #enable libinjection support for SQLI
+LibInjectionXss; #enable libinjection support for XSS
 
+DeniedUrl "/RequestDenied"; #the location where naxsi will redirect the request when it is blocked
+CheckRule "$SQL >= 8" BLOCK; #the action to take when the $SQL score is superior or equal to 8
+CheckRule "$RFI >= 8" BLOCK;
+CheckRule "$TRAVERSAL >= 5" BLOCK;
+CheckRule "$UPLOAD >= 5" BLOCK;
+CheckRule "$XSS >= 8" BLOCK;
+```
+
+Open server block or vhost file to include naxsi rules. May refer following example:
+
+```
+server {
+...
+
+    location / {
+
+        include '/etc/nginx/naxsi.rules';
+	
+	# naxsi best if use with reverse proxy
+	# pass traffic to apache port 8080
+	proxy_pass http://127.0.0.1:8080; 
+        ....
+    }
+
+    
+    location /RequestDenied { # this is the location where naxsi redirect if block the request
+        internal;
+        return 403; // Or return any file.
+    }
+
+    ...
+
+}
+```
+
+When request to the server initiated by web browser, the request will handle by `naxsi`, if something unintended happened, `naxsi` will redirect the request into `/RequestDenied`, turns out showing 403 or anything. Restart nginx to reflect changes:
+
+```
+# check for config file
+nginx -t
+
+# Reload nginx service
+service nginx reload
+```
+
+Test basic XSS script:
+
+```
+curl 'http://<your_server_ip>/?q="><script>alert(0)</script>'
+```
+
+Verify that its actually block the request by reading `/var/log/nginx/error.log`
+
+```
+2019/09/06 03:05:05 [error] 21356#0: *1 NAXSI_FMT: ip=<your_server_ip>&server=<your_server_ip>&uri=/&learning=0&vers=0.56&total_processed=1&total_blocked=1&block=1&cscore0=$SQL&score0=8&cscore1=$XSS&score1=8&zone0=ARGS&id0=1001&var_name0=q, client: <your_server_ip>, server: localhost, request: "GET /?q="><script>alert(0)</script> HTTP/1.1", host: "<your_server_ip>"
+```
+
+Or try with basic SQL injection:
+
+```
+curl 'http://<your_server_ip>/?q=1" or "1"="1"'
+```
+
+And observe the `error.log`:
+
+```
+2018/11/07 17:08:01 [error] 21356#0: *2 NAXSI_FMT: ip=<your_server_ip>&server=<your_server_ip>&uri=/&learning=0&vers=0.56&total_processed=2&total_blocked=2&block=1&cscore0=$SQL&score0=40&cscore1=$XSS&score1=40&zone0=ARGS&id0=1001&var_name0=q, client: <your_server_ip>, server: localhost, request: "GET /?q=1" or "1"="1" HTTP/1.1", host: "<your_server_ip>"
+```
+
+If you found something like above inside `error.log` file, it is proved that you've configure `naxsi` properly. While in learning mode, `naxsi` only log the error without actually block the request. To enable in production site, just uncomment the option `# LearningMode;`.
 
