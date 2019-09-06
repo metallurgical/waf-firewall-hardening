@@ -170,8 +170,47 @@ curl 'http://<your_server_ip>/?q=1" or "1"="1"'
 And observe the `error.log`:
 
 ```
-2018/11/07 17:08:01 [error] 21356#0: *2 NAXSI_FMT: ip=<your_server_ip>&server=<your_server_ip>&uri=/&learning=0&vers=0.56&total_processed=2&total_blocked=2&block=1&cscore0=$SQL&score0=40&cscore1=$XSS&score1=40&zone0=ARGS&id0=1001&var_name0=q, client: <your_server_ip>, server: localhost, request: "GET /?q=1" or "1"="1" HTTP/1.1", host: "<your_server_ip>"
+2019/09/06 03:07:05 [error] 21356#0: *2 NAXSI_FMT: ip=<your_server_ip>&server=<your_server_ip>&uri=/&learning=0&vers=0.56&total_processed=2&total_blocked=2&block=1&cscore0=$SQL&score0=40&cscore1=$XSS&score1=40&zone0=ARGS&id0=1001&var_name0=q, client: <your_server_ip>, server: localhost, request: "GET /?q=1" or "1"="1" HTTP/1.1", host: "<your_server_ip>"
 ```
 
 If you found something like above inside `error.log` file, it is proved that you've configure `naxsi` properly. While in learning mode, `naxsi` only log the error without actually block the request. To enable in production site, just uncomment the option `# LearningMode;`.
+
+### Creating Whitelist
+
+Not only that, `naxsi` even provide an option to only block the certain request. By default `naxsi` will block any suspicious request but if you want `naxsi` blocking only for certain request, thats `whitelist` features comes to the rescue. 
+
+To do that, we can use external plugin called `nx_util` which is made available by using python code, download [here](https://code.google.com/archive/p/naxsi/downloads). Or just head over to this documention for [whitelist](https://github.com/nbs-system/naxsi/wiki/whitelists-bnf) for more details. Execute following command:
+
+```
+cd /tmp
+wget https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/naxsi/nx_util-1.1.tgz
+tar -zxf nx_util-1.1.tgz
+cd nx_util-1.1.tgz
+```
+
+And following command to get the constructed rules:
+
+```python
+python nx_util.py -c nx_util.conf -l /var/log/nginx/* -o
+```
+
+After run above command, it will create an output and copy everything:
+
+```
+########### Optimized Rules Suggestion ##################
+# total_count:4 (40.0%), peer_count:1 (100.0%) | ; in stuff
+BasicRule wl:1008 "mz:$URL:/|$ARGS_VAR:q";
+# total_count:2 (60.0%), peer_count:1 (100.0%) | parenthesis, probable sql/xss
+BasicRule wl:1010 "mz:$URL:/|$ARGS_VAR:q";
+```
+
+Paste following content at the end of `/etc/nginx/naxsi.rules` and turns of `#LearningMode`. This time, `naxsi` will only blocks the request if the request matched with the rules defined above. Once everything in place, reload nginx
+
+```
+service nginx reload
+```
+
+Done.
+
+
 
