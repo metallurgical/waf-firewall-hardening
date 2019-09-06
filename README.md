@@ -96,7 +96,7 @@ http {
 }
 ```
 
-Naxsi works on a per-location basis, meaning you can only enable it inside a location under each vhost. Create another file to store basic rules to enable `naxsi` either in learning mode or production mode as well as whitelist rules. Create file `/etc/nginx/naxsi.rules` and put following content:
+Naxsi works on a per-location basis, meaning you can only enable it inside a location under each vhost. Create another file to store basic rules or [`checkrules`](https://github.com/nbs-system/naxsi/wiki/checkrules-bnf) to enable `naxsi` either in learning mode or production mode as well as whitelist rules. Create file `/etc/nginx/naxsi.rules` and put following content:
 
 ```
 SecRulesEnabled; #enable naxsi
@@ -104,6 +104,9 @@ LearningMode; #<----- learning mode, turn off to start blocking unintended reque
 LibInjectionSql; #enable libinjection support for SQLI
 LibInjectionXss; #enable libinjection support for XSS
 
+# Checkrules
+# CheckRule must be present at location level.
+# Check https://github.com/nbs-system/naxsi/wiki/checkrules-bnf for more details
 DeniedUrl "/RequestDenied"; #the location where naxsi will redirect the request when it is blocked
 CheckRule "$SQL >= 8" BLOCK; #the action to take when the $SQL score is superior or equal to 8
 CheckRule "$RFI >= 8" BLOCK;
@@ -204,7 +207,7 @@ BasicRule wl:1008 "mz:$URL:/|$ARGS_VAR:q";
 BasicRule wl:1010 "mz:$URL:/|$ARGS_VAR:q";
 ```
 
-Paste following content at the end of `/etc/nginx/naxsi.rules` and turns of `#LearningMode`. This time, `naxsi` will only blocks the request if the request matched with the rules defined above. Once everything in place, reload nginx
+Paste following content at the end of `/etc/nginx/naxsi.rules` and turns of `#LearningMode`. This time, `naxsi` will only blocks the request if the request matched with the rules defined above. Check [rules](https://github.com/nbs-system/naxsi/wiki/rules-bnf) for more details. Once everything in place, reload nginx
 
 ```
 service nginx reload
