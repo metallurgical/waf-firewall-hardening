@@ -67,7 +67,7 @@ cd /tmp/nginx-$NGINX_VERSION
 make modules
 ```
 
-From above command, a file `ngx_http_naxsi_module.so` will be created under `/tmp/nginx-$NGINX_VERSION/objs` directory. Copy this file into `/etc/nginx/modules`. Copy `/tmp/naxsi-$NAXSI_VERSION/naxsi_config/naxsi_core.rules` into `/etc/nginx`, this file can be found under `naxsi-$NAXSI_VERSION/naxsi_config`.
+From above command, a file `ngx_http_naxsi_module.so` will be created under `/tmp/nginx-$NGINX_VERSION/objs` directory. Copy this file into `/etc/nginx/modules`. Copy `/tmp/naxsi-$NAXSI_VERSION/naxsi_config/naxsi_core.rules` into `/etc/nginx/rules (create directory if not exists)`, this file can be found under `/tmp/naxsi-$NAXSI_VERSION/naxsi_confi/naxsi_config`.
 
 Load module `ngx_http_naxsi_module.so` inside `/etc/nginx/nginx.conf` as well as `naxsi_core.rules`
 
@@ -86,7 +86,7 @@ events {
 
 http {
 	client_max_body_size 100M;
-  	include /etc/nginx/naxsi_core.rules; # <----------- load naxsi core rules
+  	include /etc/nginx/rules/naxsi_core.rules; # <----------- load naxsi core rules
   
 	##
 	# Basic Settings
@@ -96,7 +96,7 @@ http {
 }
 ```
 
-Naxsi works on a per-location basis, meaning you can only enable it inside a location under each vhost. Create another file to store basic rules or [`checkrules`](https://github.com/nbs-system/naxsi/wiki/checkrules-bnf) to enable `naxsi` either in learning mode or production mode as well as whitelist rules. Create file `/etc/nginx/naxsi.rules` and put following content:
+Naxsi works on a per-location basis, meaning you can only enable it inside a location under each vhost. Create another file to store basic rules or [`checkrules`](https://github.com/nbs-system/naxsi/wiki/checkrules-bnf) to enable `naxsi` either in learning mode or production mode as well as whitelist rules. Create file `/etc/nginx/rules/naxsi.rules` and put following content:
 
 ```
 SecRulesEnabled; #enable naxsi
@@ -123,7 +123,7 @@ server {
 
     location / {
 
-        include '/etc/nginx/naxsi.rules';
+        include '/etc/nginx/rules/naxsi.rules';
 	
 	# naxsi best if use with reverse proxy
 	# pass traffic to apache port 8080
