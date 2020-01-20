@@ -63,11 +63,11 @@ configure arguments: --prefix=/usr/local/Cellar/nginx/.......
 Head over to `nginx` folder, to compile the source
 ```
 cd /tmp/nginx-$NGINX_VERSION
-./configure <paste-arguments-copied-before> --add-dynamic-module=../naxsi-$NAXSI_VER/naxsi_src/
+./configure <paste-arguments-copied-before> --add-dynamic-module=../naxsi-$NAXSI_VERSION/naxsi_src/
 make modules
 ```
 
-From above command, a file `ngx_http_naxsi_module.so` will be created under `objs` directory. Copy this file into `/etc/nginx/modules`. Copy `naxsi_core.rules` into `/etc/nginx`, this file can be found under `naxsi-$NAXSI_VERSION/naxsi_config`.
+From above command, a file `ngx_http_naxsi_module.so` will be created under `/tmp/nginx-$NGINX_VERSION/objs` directory. Copy this file into `/etc/nginx/modules`. Copy `naxsi_core.rules` into `/etc/nginx`, this file can be found under `naxsi-$NAXSI_VERSION/naxsi_config`.
 
 Load module `ngx_http_naxsi_module.so` inside `/etc/nginx/nginx.conf` as well as `naxsi_core.rules`
 
